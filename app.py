@@ -9,7 +9,7 @@ from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-CORS(app, resources={r"/*": {"origins": ["your-domain.com"]}})
+CORS(app, resources={r"/*": {"origins": ["https://udeetpirate.vercel.app/"]}})
 
 # For Vercel, we need to handle the root path differently
 if os.environ.get("VERCEL_ENV") == "production":
