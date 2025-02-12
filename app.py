@@ -11,6 +11,18 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 CORS(app, resources={r"/*": {"origins": ["your-domain.com"]}})
 
+# For Vercel, we need to handle the root path differently
+if os.environ.get("VERCEL_ENV") == "production":
+    app.config["STATIC_FOLDER"] = "/tmp"
+    SUBTITLE_DIR = "/tmp/subtitles"
+else:
+    SUBTITLE_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "static/subtitles"
+    )
+
+if not os.path.exists(SUBTITLE_DIR):
+    os.makedirs(SUBTITLE_DIR, mode=0o755)
+
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -208,13 +220,6 @@ def get_stream():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
-
-
-SUBTITLE_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "static/subtitles"
-)
-if not os.path.exists(SUBTITLE_DIR):
-    os.makedirs(SUBTITLE_DIR, mode=0o755)
 
 
 @app.route("/static/subtitles/<path:filename>")
