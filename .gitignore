@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Subtitles directory
+static/subtitles/*
+!static/subtitles/.gitkeep
+
+# Environment variables
+.env
+
+# System files
+.DS_Store

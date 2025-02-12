@@ -1,0 +1,228 @@
+from flask import Flask, render_template, request, jsonify, send_from_directory
+from HdRezkaApi import *
+import os
+import requests
+from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+CORS(app, resources={r"/*": {"origins": ["your-domain.com"]}})
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return jsonify({"success": False, "error": "Resource not found"}), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"success": False, "error": "Internal server error"}), 500
+
+
+limiter = Limiter(
+    app=app, key_func=get_remote_address, default_limits=["200 per day", "50 per hour"]
+)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/search", methods=["POST"])
+@limiter.limit("30 per minute")
+def search():
+    query = request.form.get("query")
+    content_type = request.form.get("content_type", "all")
+
+    try:
+        results = HdRezkaSearch("https://hdrezka.ag/")(query, find_all=True)
+        matching_result = None
+
+        # Search through pages to find first matching result
+        for page in results:
+            for result in page:
+                print(result)
+                # If content_type is 'all' or matches the result type, store it
+                if content_type == "all" or result.get("type") == content_type:
+                    matching_result = result
+                    break
+            if matching_result:
+                break
+
+        if not matching_result:
+            return jsonify({"success": False, "error": f"No {content_type} found"})
+
+        url = matching_result["url"]
+        rezka = HdRezkaApi(url)
+        print(rezka)
+        if rezka.type == "tv_series":
+            # For TV series, only return series info without initial stream
+            series_info = rezka.seriesInfo["Оригинал (+субтитры)"]
+
+            # Calculate number of seasons and episodes per season
+            num_seasons = len(series_info["seasons"])
+            episodes_per_season = {
+                season: len(episodes)
+                for season, episodes in series_info["episodes"].items()
+            }
+            print(num_seasons, "seasons", episodes_per_season, "episodes per season")
+            return jsonify(
+                {
+                    "success": True,
+                    "type": "tv_series",
+                    "movie_name": query,
+                    "thumbnail": rezka.thumbnail,
+                    "rating": rezka.rating.value,
+                    "translation_id": "238",
+                    "num_seasons": num_seasons,
+                    "episodes_per_season": episodes_per_season,
+                }
+            )
+        else:
+            # For movies, return everything including stream URL and subtitles
+            stream = rezka.getStream(translation="238")("1080p")
+            stream_2 = rezka.getStream(translation="238")
+            subtitle_filename = None
+
+            subtitles_url = stream_2.subtitles.subtitles["en"]["link"]
+            print(subtitles_url)
+            os.makedirs("static/subtitles", exist_ok=True)
+            response = requests.get(subtitles_url)
+            if response.status_code == 200:
+                subtitle_filename = f"{query}_subtitles.vtt"
+                with open(f"static/subtitles/{subtitle_filename}", "wb") as f:
+                    f.write(response.content)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "type": "movie",
+                    "movie_name": query,
+                    "thumbnail": rezka.thumbnail,
+                    "rating": rezka.rating.value,
+                    "stream_url": stream,
+                    "subtitle_filename": subtitle_filename,
+                }
+            )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/episodes", methods=["GET"])
+def get_episodes():
+    season = request.args.get("season")
+    translation_id = request.args.get("translation_id")
+    query = request.args.get("query")
+
+    try:
+        # Get the content URL from the search results
+        results = HdRezkaSearch("https://hdrezka.ag/")(query)
+        if not results:
+            return jsonify({"success": False, "error": "Content not found"})
+
+        url = results[0]["url"]
+        rezka = HdRezkaApi(url)
+
+        # Get episodes for the specified season
+        series_info = rezka.seriesInfo["Оригинал (+субтитры)"]
+        if not season in series_info["episodes"]:
+            return jsonify({"success": False, "error": "Season not found"})
+
+        # Return list of episode numbers for the season
+        episodes = list(series_info["episodes"][int(season)].keys())
+        return jsonify({"success": True, "episodes": episodes})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/stream", methods=["GET"])
+@limiter.limit("60 per minute")
+def get_stream():
+    season = request.args.get("season")
+    episode = request.args.get("episode")
+    query = request.args.get("query")
+    content_type = request.args.get("content_type")
+
+    try:
+        results = HdRezkaSearch("https://hdrezka.ag/")(query, find_all=True)
+        matching_result = None
+
+        # Search through pages to find first matching result
+        for page in results:
+            for result in page:
+                if content_type == "all" or result.get("type") == content_type:
+                    matching_result = result
+                    break
+            if matching_result:
+                break
+
+        if not matching_result:
+            return jsonify({"success": False, "error": f"No {content_type} found"})
+
+        url = matching_result["url"]
+        rezka = HdRezkaApi(url)
+
+        # Handle TV series
+        if content_type == "tv_series":
+            stream = rezka.getStream(translation="238", season=season, episode=episode)(
+                "1080p"
+            )
+        # Handle movies
+        else:
+            stream = rezka.getStream(translation="238")("1080p")
+
+        # Get subtitles for either type
+        stream_2 = (
+            rezka.getStream(translation="238", season=season, episode=episode)
+            if content_type == "tv_series"
+            else rezka.getStream(translation="238")
+        )
+        subtitle_filename = None
+
+        if (
+            hasattr(stream_2, "subtitles")
+            and hasattr(stream_2.subtitles, "subtitles")
+            and "en" in stream_2.subtitles.subtitles
+        ):
+            subtitles_url = stream_2.subtitles.subtitles["en"]["link"]
+            os.makedirs("static/subtitles", exist_ok=True)
+            response = requests.get(subtitles_url)
+            if response.status_code == 200:
+                subtitle_filename = f"{query}_{'s' + season + 'e' + episode if content_type == 'tv_series' else ''}_subtitles.vtt"
+                with open(f"static/subtitles/{subtitle_filename}", "wb") as f:
+                    f.write(response.content)
+
+        return jsonify(
+            {
+                "success": True,
+                "stream_url": stream,
+                "subtitle_filename": subtitle_filename,
+            }
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+SUBTITLE_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "static/subtitles"
+)
+if not os.path.exists(SUBTITLE_DIR):
+    os.makedirs(SUBTITLE_DIR, mode=0o755)
+
+
+@app.route("/static/subtitles/<path:filename>")
+def serve_subtitle(filename):
+    if ".." in filename or filename.startswith("/"):
+        return jsonify({"success": False, "error": "Invalid filename"}), 400
+    return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

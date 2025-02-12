@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Netflix - Everything you watch at one place, for free.</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.ico"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Netflix+Sans:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      body {
+        font-family: "Netflix Sans", "Helvetica Neue", Helvetica, Arial,
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #141414;
+        color: #ffffff;
+        min-height: 100vh;
+      }
+      video::cue {
+        background-color: rgba(0, 0, 0, 0.509); /* Semi-transparent black background */
+        color: white; /* White text */
+        font-size: 27px; /* Font size */
+        font-family: "Netflix Sans", "Helvetica Neue", Helvetica, Arial,
+        sans-serif;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Text shadow */
+      }
+
+      .search-container {
+        background: linear-gradient(
+          to bottom,
+          #000000 0%,
+          rgba(0, 0, 0, 0.8) 60%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+        padding: 60px 20px;
+        text-align: center;
+        position: relative;
+      }
+      input[type="text"] {
+        padding: 14px 20px;
+        width: 600px;
+        font-size: 16px;
+        background: rgba(0, 0, 0, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        color: white;
+        margin-right: 10px;
+        transition: all 0.2s ease;
+      }
+      input[type="text"]::placeholder {
+        color: #8c8c8c;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #e50914;
+        background: rgba(0, 0, 0, 0.9);
+      }
+      button {
+        padding: 14px 26px;
+        font-size: 16px;
+        background: #e50914;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+      button:hover {
+        background: #f40612;
+      }
+      #result {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 40px;
+      }
+      .video-container {
+        margin-top: 20px;
+        position: relative;
+        background: #000;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      video {
+        width: 100%;
+        max-width: 100%;
+      }
+      .loading {
+        display: none;
+        text-align: center;
+        margin: 20px 0;
+        color: #e50914;
+        font-weight: 500;
+      }
+      .movie-info {
+        background: rgba(19, 19, 19, 0.9);
+        border-radius: 4px;
+        padding: 30px;
+        margin-bottom: 30px;
+        display: flex;
+        gap: 30px;
+      }
+      .movie-details {
+        flex: 1;
+      }
+      .movie-details p {
+        margin: 15px 0;
+        line-height: 1.6;
+        color: #d2d2d2;
+      }
+      h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #ffffff;
+      }
+      img {
+        border-radius: 4px;
+        max-width: 300px;
+        height: 450px;
+        object-fit: cover;
+      }
+      .rating {
+        display: inline-block;
+        background: rgba(229, 9, 20, 0.1);
+        color: #e50914;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(229, 9, 20, 0.3);
+      }
+      .overview {
+        color: #8c8c8c;
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+      .meta-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+      .year {
+        display: inline-block;
+        color: #8c8c8c;
+        font-size: 1.1rem;
+        font-weight: 500;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        padding: 20px;
+      }
+      .netflix-logo {
+        height: 45px;
+        width: auto;
+      }
+      .search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .search-hint {
+        color: #8c8c8c;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 768px) {
+        input[type="text"] {
+          width: calc(100% - 40px);
+          margin-bottom: 10px;
+        }
+        .movie-info {
+          flex-direction: column;
+        }
+        img {
+          max-width: 100%;
+        }
+      }
+      .series-selector {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .series-selector select {
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        min-width: 150px;
+      }
+
+      .series-selector select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .series-selector select:not(:disabled):hover {
+        border-color: #e50914;
+      }
+
+      .series-selector select:focus {
+        outline: none;
+        border-color: #e50914;
+      }
+
+      .series-selector select option {
+        background: #141414;
+        color: white;
+        padding: 8px;
+      }
+
+      .episode-loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(229, 9, 20, 0.3);
+        border-radius: 50%;
+        border-top-color: #e50914;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .content-type-select {
+        padding: 14px;
+        font-size: 16px;
+        background: rgba(0, 0, 0, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .content-type-select:focus {
+        outline: none;
+        border-color: #e50914;
+      }
+
+      .content-type-select option {
+        background: #141414;
+        padding: 8px;
+      }
+
+      .star-rating {
+        color: #e50914;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="search-container">
+      <div class="header">
+        <img
+          src="https://cdn.cookielaw.org/logos/dd6b162f-1a32-456a-9cfe-897231c7763c/4345ea78-053c-46d2-b11e-09adaef973dc/Netflix_Logo_PMS.png"
+          alt="Netflix Logo"
+          class="netflix-logo"
+        />
+        <div class="search-wrapper">
+          <div style="text-align: right">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="What do you want to watch today?"
+              />
+              <select id="contentType" class="content-type-select">
+                <option value="all">All</option>
+                <option value="tv_series">TV Show</option>
+                <option value="movie">Movie</option>
+              </select>
+              <button onclick="searchMovie()">Search</button>
+            </div>
+            <div class="search-hint" style="margin-right: 10px">
+              [or press enter]
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div style="margin-top: 10px">Searching...</div>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+      const TMDB_API_KEY = "a5dc7b54aa3439bc5954c4e2c7df0bba";
+
+      async function getMoviePoster(name, type) {
+        try {
+          const endpoint = type === "tv_series" ? "tv" : "movie";
+
+          const response = await fetch(
+            `https://api.themoviedb.org/3/search/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
+              name
+            )}`
+          );
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+            const movieId = data.results[0].id;
+            let director = null;
+            let reviews = [];
+
+            // Fetch additional info only for movies
+            if (type !== "tv_series" && movieId) {
+              // Fetch director info
+              const creditsResponse = await fetch(
+                `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}`
+              );
+              const creditsData = await creditsResponse.json();
+              const directorInfo = creditsData.crew.find(
+                (person) => person.job === "Director"
+              );
+              director = directorInfo ? directorInfo.name : null;
+
+              // Fetch reviews
+              const reviewsResponse = await fetch(
+                `https://api.themoviedb.org/3/movie/${movieId}/reviews?api_key=${TMDB_API_KEY}`
+              );
+              const reviewsData = await reviewsResponse.json();
+              reviews = reviewsData.results
+                .slice(0, 2) // Limit to 2 reviews
+                .map((review) => ({
+                  author: review.author,
+                  content:
+                    review.content.length > 300
+                      ? review.content.substring(0, 300) + "..."
+                      : review.content,
+                  rating: Math.round(Math.random() * 2 + 3), // Random rating between 3-5 stars for demo
+                }));
+            }
+
+            const releaseYear =
+              data.results[0].first_air_date || data.results[0].release_date
+                ? new Date(
+                    data.results[0].first_air_date ||
+                      data.results[0].release_date
+                  ).getFullYear()
+                : null;
+
+            return {
+              poster_path: `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`,
+              title: data.results[0].name || data.results[0].title,
+              overview: data.results[0].overview,
+              rating: data.results[0].vote_average,
+              year: releaseYear,
+              director: director,
+              reviews: reviews,
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error("TMDB API Error:", error);
+          return null;
+        }
+      }
+
+      async function searchMovie() {
+        const query = document.getElementById("searchInput").value;
+        const contentType = document.getElementById("contentType").value;
+        const loading = document.getElementById("loading");
+        const result = document.getElementById("result");
+
+        if (!query) {
+          alert("Please enter a search query");
+          return;
+        }
+
+        loading.style.display = "block";
+        result.innerHTML = "";
+
+        try {
+          const response = await fetch("/search", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: `query=${encodeURIComponent(
+              query
+            )}&content_type=${contentType}`,
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            const tmdbData = await getMoviePoster(data.movie_name, data.type);
+            loading.style.display = "none";
+
+            if (data.type === "tv_series") {
+              // Show TV series interface with season and episode selection
+              result.innerHTML = `
+                <h2>${tmdbData ? tmdbData.title : data.movie_name}</h2>
+                <div class="movie-info">
+                    <img src="${
+                      tmdbData ? tmdbData.poster_path : data.thumbnail
+                    }" 
+                         alt="${tmdbData ? tmdbData.title : data.movie_name}"
+                         style="object-fit: cover; height: 450px;">
+                    <div class="movie-details">
+                        <div class="meta-info">
+                            <span class="rating">${
+                              tmdbData
+                                ? tmdbData.rating.toFixed(1)
+                                : data.rating.toFixed(1)
+                            }/10</span>
+                            ${
+                              tmdbData && tmdbData.year
+                                ? `<span class="year">${tmdbData.year}</span>`
+                                : ""
+                            }
+                            <span class="series-info">${
+                              data.num_seasons
+                            } Seasons</span>
+                        </div>
+                        ${
+                          tmdbData
+                            ? `<p class="overview">${tmdbData.overview}</p>`
+                            : ""
+                        }
+                        <div class="series-selector">
+                            <select id="seasonSelect" onchange="loadEpisodes(this.value)">
+                                <option value="">Select Season</option>
+                                ${Object.entries(data.episodes_per_season)
+                                  .sort((a, b) => Number(a[0]) - Number(b[0]))
+                                  .map(
+                                    ([season, numEpisodes]) =>
+                                      `<option value="${season}">Season ${season}</option>`
+                                  )
+                                  .join("")}
+                            </select>
+                            <select id="episodeSelect" onchange="loadEpisode()" disabled 
+                              data-episodes-per-season='${JSON.stringify(
+                                data.episodes_per_season
+                              )}'>
+                                <option value="">Select Episode</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-container">
+                    <div class="episode-loading" id="episodeLoading">
+                        <div class="spinner"></div>
+                        <div style="margin-top: 10px; color: #e50914;">Loading episode...</div>
+                    </div>
+                    <video controls crossorigin="anonymous">
+                        <source src="" type="video/mp4">
+                    </video>
+                </div>
+              `;
+            } else {
+              // Show movie directly with video player
+              result.innerHTML = `
+                <h2>${tmdbData ? tmdbData.title : data.movie_name}</h2>
+                <div class="movie-info">
+                    <img src="${
+                      tmdbData ? tmdbData.poster_path : data.thumbnail
+                    }" 
+                         alt="${tmdbData ? tmdbData.title : data.movie_name}"
+                         style="object-fit: cover; height: 450px;">
+                    <div class="movie-details">
+                        <div class="meta-info">
+                            <span class="rating">${
+                              tmdbData
+                                ? tmdbData.rating.toFixed(1)
+                                : data.rating.toFixed(1)
+                            }/10</span>
+                            ${
+                              tmdbData && tmdbData.year
+                                ? `<span class="year">${tmdbData.year}</span>`
+                                : ""
+                            }
+                            ${
+                              tmdbData && tmdbData.director
+                                ? `<span class="director" style="color: #8c8c8c;"><em>Dir: ${tmdbData.director}</em></span>`
+                                : ""
+                            }
+                        </div>
+                        ${
+                          tmdbData
+                            ? `<p class="overview">${tmdbData.overview}</p>`
+                            : ""
+                        }
+                        ${
+                          tmdbData &&
+                          tmdbData.reviews &&
+                          tmdbData.reviews.length > 0
+                            ? `
+                          <div class="reviews-section" style="margin-top: 20px;">
+                            <h3 style="color: #e50914; font-size: 1.2rem; margin-bottom: 15px;">User Reviews</h3>
+                            ${tmdbData.reviews
+                              .map(
+                                (review) => `
+                              <div class="review" style="margin-bottom: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 4px;">
+                                <div style="color: #e50914; font-weight: 500; margin-bottom: 8px; display: flex; align-items: center;">
+                                  ${review.author}
+                                  <span class="star-rating">
+                                    ${"★".repeat(review.rating)}${"☆".repeat(
+                                  5 - review.rating
+                                )}
+                                  </span>
+                                </div>
+                                <div style="color: #8c8c8c; font-size: 0.9rem; line-height: 1.5;">${
+                                  review.content
+                                }</div>
+                              </div>
+                            `
+                              )
+                              .join("")}
+                          </div>
+                        `
+                            : ""
+                        }
+                    </div>
+                </div>
+                <div class="video-container">
+                    <video controls crossorigin="anonymous">
+                        <source src="${data.stream_url}" type="video/mp4">
+                        ${
+                          data.subtitle_filename
+                            ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
+                            : ""
+                        }
+                    </video>
+                </div>
+              `;
+            }
+          } else {
+            loading.style.display = "none";
+            result.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          loading.style.display = "none";
+          result.innerHTML = "An error occurred while searching.";
+        }
+      }
+
+      // Update the TV series handling functions
+      async function loadEpisodes(season) {
+        const episodeSelect = document.getElementById("episodeSelect");
+
+        // Clear and disable episode select if no season is chosen
+        if (!season) {
+          episodeSelect.disabled = true;
+          episodeSelect.innerHTML = '<option value="">Select Episode</option>';
+          return;
+        }
+
+        // Get the episodes_per_season data that was already loaded
+        const episodesPerSeason = JSON.parse(
+          episodeSelect.getAttribute("data-episodes-per-season")
+        );
+        const numEpisodes = episodesPerSeason[season];
+
+        if (numEpisodes) {
+          // Enable the episode select and populate it with episodes from 1 to numEpisodes
+          episodeSelect.disabled = false;
+          episodeSelect.innerHTML =
+            '<option value="">Select Episode</option>' +
+            Array.from({ length: numEpisodes }, (_, i) => i + 1)
+              .map(
+                (episode) =>
+                  `<option value="${episode}">Episode ${episode}</option>`
+              )
+              .join("");
+        } else {
+          episodeSelect.innerHTML =
+            '<option value="">No episodes found</option>';
+          episodeSelect.disabled = true;
+        }
+      }
+
+      async function loadEpisode() {
+        const season = document.getElementById("seasonSelect").value;
+        const episode = document.getElementById("episodeSelect").value;
+        const video = document.querySelector(".video-container video");
+        const loading = document.getElementById("episodeLoading");
+
+        if (!season || !episode) {
+          video.src = "";
+          video.load();
+          return;
+        }
+
+        try {
+          loading.style.display = "block";
+          video.style.display = "none";
+
+          const query = document.getElementById("searchInput").value;
+          const contentType = document.getElementById("contentType").value;
+          const response = await fetch(
+            `/stream?season=${season}&episode=${episode}&query=${encodeURIComponent(
+              query
+            )}&content_type=${contentType}`,
+            {
+              method: "GET",
+            }
+          );
+          const data = await response.json();
+
+          if (data.success) {
+            video.innerHTML = `
+              <source src="${data.stream_url}" type="video/mp4">
+              ${
+                data.subtitle_filename
+                  ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
+                  : ""
+              }
+            `;
+            video.load();
+
+            // Hide loading and show video once it's ready to play
+            video.onloadeddata = () => {
+              loading.style.display = "none";
+              video.style.display = "block";
+            };
+          }
+        } catch (error) {
+          console.error("Error loading episode:", error);
+          loading.style.display = "none";
+          video.style.display = "block";
+        }
+      }
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            searchMovie();
+          }
+        });
+    </script>
+  </body>
+</html>
