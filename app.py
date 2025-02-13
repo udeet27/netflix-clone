@@ -120,11 +120,11 @@ def search():
 
         url = matching_result["url"]
         rezka = HdRezkaApi(
-            url,
-            proxy={
-                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-            },
+            url
+            # proxy={
+            #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            # }
         )
 
         if rezka.type == "tv_series":
