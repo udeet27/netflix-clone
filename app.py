@@ -74,7 +74,7 @@ def get_free_proxy():
     """Fetch a list of free proxies and select a random one."""
     try:
         response = requests.get(
-            "https://proxylist.geonode.com/api/proxy-list?protocols=http&limit=500&page=1&sort_by=speed&sort_type=desc"
+            "https://proxylist.geonode.com/api/proxy-list?protocols=http&limit=50&page=1&sort_by=speed&sort_type=desc"
         )
         proxies = response.json().get("data", [])
         proto = ['http']
