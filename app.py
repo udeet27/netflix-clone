@@ -74,8 +74,14 @@ def try_search_with_fallback(query, find_all=True):
                 "Connection": "keep-alive",
             }
             print(f"Trying domain: {domain}")
-            rezka = HdRezkaSearch(domain,  {'http': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335',
-            'https': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335'}, headers)
+            rezka = HdRezkaSearch(
+                domain,
+                {
+                    "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                    "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                },
+                headers,
+            )
             results = rezka(query, find_all=find_all)
             if results:
                 return results
@@ -98,16 +104,11 @@ def search():
         if not query:
             return jsonify({"success": False, "error": "No query provided"}), 400
 
-        # Use the new search function with fallback domains
         results = try_search_with_fallback(query, find_all=True)
-        print("API response: ", results)
         matching_result = None
 
-        # Search through pages to find first matching result
         for page in results:
             for result in page:
-                print(result)
-                # If content_type is 'all' or matches the result type, store it
                 if content_type == "all" or result.get("type") == content_type:
                     matching_result = result
                     break
@@ -118,20 +119,22 @@ def search():
             return jsonify({"success": False, "error": f"No {content_type} found"})
 
         url = matching_result["url"]
-        rezka = HdRezkaApi(url, proxy= {'http': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335',
-            'https': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335'})
-        print(rezka)
-        if rezka.type == "tv_series":
-            # For TV series, only return series info without initial stream
-            series_info = rezka.seriesInfo["Оригинал (+субтитры)"]
+        rezka = HdRezkaApi(
+            url,
+            proxy={
+                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            },
+        )
 
-            # Calculate number of seasons and episodes per season
+        if rezka.type == "tv_series":
+            # TV series handling remains the same
+            series_info = rezka.seriesInfo["Оригинал (+субтитры)"]
             num_seasons = len(series_info["seasons"])
             episodes_per_season = {
                 season: len(episodes)
                 for season, episodes in series_info["episodes"].items()
             }
-            print(num_seasons, "seasons", episodes_per_season, "episodes per season")
             return jsonify(
                 {
                     "success": True,
@@ -145,19 +148,23 @@ def search():
                 }
             )
         else:
-            # For movies, return everything including stream URL and subtitles
             stream = rezka.getStream(translation="238")("1080p")
             stream_2 = rezka.getStream(translation="238")
             subtitle_filename = None
 
-            subtitles_url = stream_2.subtitles.subtitles["en"]["link"]
-            print(subtitles_url)
-            os.makedirs("static/subtitles", exist_ok=True)
-            response = requests.get(subtitles_url)
-            if response.status_code == 200:
-                subtitle_filename = f"{query}_subtitles.vtt"
-                with open(f"static/subtitles/{subtitle_filename}", "wb") as f:
-                    f.write(response.content)
+            if (
+                hasattr(stream_2, "subtitles")
+                and hasattr(stream_2.subtitles, "subtitles")
+                and "en" in stream_2.subtitles.subtitles
+            ):
+                subtitles_url = stream_2.subtitles.subtitles["en"]["link"]
+                response = requests.get(subtitles_url)
+                if response.status_code == 200:
+                    subtitle_filename = f"{query}_subtitles.vtt"
+                    subtitle_path = os.path.join(SUBTITLE_DIR, subtitle_filename)
+                    os.makedirs(os.path.dirname(subtitle_path), exist_ok=True)
+                    with open(subtitle_path, "wb") as f:
+                        f.write(response.content)
 
             return jsonify(
                 {
@@ -172,7 +179,7 @@ def search():
             )
 
     except Exception as e:
-        print(f"Search Error: {str(e)}")  # Add error logging
+        print(f"Search Error: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
