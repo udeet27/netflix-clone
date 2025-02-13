@@ -118,7 +118,8 @@ def search():
             return jsonify({"success": False, "error": f"No {content_type} found"})
 
         url = matching_result["url"]
-        rezka = HdRezkaApi(url)
+        rezka = HdRezkaApi(url, proxy= {'http': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335',
+            'https': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335'})
         print(rezka)
         if rezka.type == "tv_series":
             # For TV series, only return series info without initial stream
