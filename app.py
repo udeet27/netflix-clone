@@ -64,6 +64,7 @@ def search():
             return jsonify({"success": False, "error": "No query provided"}), 400
 
         results = HdRezkaSearch("https://hdrezka.ag/")(query, find_all=True)
+        print("API response: ", results)
         matching_result = None
 
         # Search through pages to find first matching result
