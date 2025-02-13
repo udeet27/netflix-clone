@@ -74,20 +74,21 @@ def get_free_proxy():
     """Fetch a list of free proxies and select a random one."""
     try:
         response = requests.get(
-            "https://proxylist.geonode.com/api/proxy-list?limit=50&page=1&sort_by=lastChecked&sort_type=desc"
+            "https://proxylist.geonode.com/api/proxy-list?protocols=http&limit=500&page=1&sort_by=speed&sort_type=desc"
         )
         proxies = response.json().get("data", [])
-        proto = ['socks4']
+        proto = ['http']
         chosen_proxies = [p for p in proxies if p['protocols'] == proto]
         print('chosen_proxies',chosen_proxies)
             
         # Select a random proxy from filtered list
         proxy = random.choice(chosen_proxies)
         print('proxy',proxy)
-        proxy_url = f"socks4://{proxy['ip']}:{proxy['port']}"
+        proxy_url = f"http://{proxy['ip']}:{proxy['port']}"
         print('proxy_url',proxy_url)
         return {
-            "socks4": proxy_url,
+            "http": proxy_url,
+            "https": proxy_url
         }
     except Exception as e:
         print("Error fetching proxies:", e)
