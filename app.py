@@ -83,7 +83,7 @@ def try_search_with_fallback(query, find_all=True):
     for domain in HDREZKA_DOMAINS:
         try:
             print(f"Trying domain: {domain}")
-            rezka = HdRezkaSearch(domain, session=session)
+            rezka = HdRezkaSearch(domain)
             results = rezka(query, find_all=find_all)
             if results:
                 return results
