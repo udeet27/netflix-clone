@@ -137,6 +137,8 @@
         font-weight: 700;
         margin-bottom: 20px;
         color: #ffffff;
+        padding: 0 40px;
+        text-align: left;
       }
       img {
         border-radius: 4px;
@@ -150,7 +152,7 @@
         color: #e50914;
         padding: 4px 8px;
         border-radius: 4px;
-        margin-bottom: 15px;
+        margin-bottom: 0;
         border: 1px solid rgba(229, 9, 20, 0.3);
       }
       .overview {
@@ -287,6 +289,11 @@
       .star-rating {
         color: #e50914;
         margin-left: 10px;
+      }
+
+      .director {
+        color: #8c8c8c;
+        font-style: italic;
       }
     </style>
   </head>
@@ -521,7 +528,7 @@
                             }
                             ${
                               tmdbData && tmdbData.director
-                                ? `<span class="director" style="color: #8c8c8c;"><em>Dir: ${tmdbData.director}</em></span>`
+                                ? `<span class="director">Dir: ${tmdbData.director}</span>`
                                 : ""
                             }
                         </div>
