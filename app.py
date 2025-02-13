@@ -149,6 +149,7 @@ def search():
             )
         else:
             stream = rezka.getStream(translation="238")("1080p")
+            print("Stream URL", stream)
             stream_2 = rezka.getStream(translation="238")
             subtitle_filename = None
 
