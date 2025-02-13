@@ -74,7 +74,8 @@ def try_search_with_fallback(query, find_all=True):
                 "Connection": "keep-alive",
             }
             print(f"Trying domain: {domain}")
-            rezka = HdRezkaSearch(domain, {}, headers)
+            rezka = HdRezkaSearch(domain,  {'http': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335',
+            'https': 'http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335'}, headers)
             results = rezka(query, find_all=find_all)
             if results:
                 return results
