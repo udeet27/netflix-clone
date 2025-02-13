@@ -6,6 +6,7 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from requests.adapters import HTTPAdapter
 import time
+import tempfile
 
 app = Flask(__name__)
 # app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -18,7 +19,7 @@ CORS(
 # For Vercel, we need to handle the root path differently
 if os.environ.get("VERCEL_ENV") == "production":
     app.config["STATIC_FOLDER"] = "/tmp"
-    SUBTITLE_DIR = "/tmp/subtitles"
+    SUBTITLE_DIR = tempfile.gettempdir()  # Use system temp directory
 else:
     SUBTITLE_DIR = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "/static/subtitles"
@@ -262,7 +263,9 @@ def get_stream():
             response = requests.get(subtitles_url)
             if response.status_code == 200:
                 subtitle_filename = f"{query}_{'s' + season + 'e' + episode if content_type == 'tv_series' else ''}_subtitles.vtt"
-                with open(f"static/subtitles/{subtitle_filename}", "wb") as f:
+                subtitle_path = os.path.join(SUBTITLE_DIR, subtitle_filename)
+                os.makedirs(os.path.dirname(subtitle_path), exist_ok=True)
+                with open(subtitle_path, "wb") as f:
                     f.write(response.content)
 
         return jsonify(
@@ -281,7 +284,11 @@ def get_stream():
 def serve_subtitle(filename):
     if ".." in filename or filename.startswith("/"):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
-    return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
+
+    if os.environ.get("VERCEL_ENV") == "production":
+        return send_from_directory(tempfile.gettempdir(), filename, mimetype="text/vtt")
+    else:
+        return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
 
 
 if __name__ == "__main__":
