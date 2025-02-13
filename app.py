@@ -1,4 +1,11 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, Response
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    send_from_directory,
+    Response,
+)
 from HdRezkaApi import *
 import os
 import requests
@@ -95,7 +102,7 @@ def try_search_with_fallback(query, find_all=True):
 @app.route("/search", methods=["POST"])
 def search():
     try:
-        
+
         query = request.form.get("query")
         content_type = request.form.get("content_type", "all")
 
@@ -126,7 +133,7 @@ def search():
                 "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             },
-            headers = {
+            headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 "Accept-Language": "en-US,en;q=0.5",
@@ -321,50 +328,48 @@ def proxy_stream():
         "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
         "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
     }
-    
+
     try:
         # Get the video headers first
         head_response = requests.head(stream_url, proxies=proxy)
-        content_length = head_response.headers.get('content-length')
-        content_type = head_response.headers.get('content-type', 'video/mp4')
+        content_length = head_response.headers.get("content-length")
+        content_type = head_response.headers.get("content-type", "video/mp4")
 
         # Get the requested range from the client
-        range_header = request.headers.get('Range')
-        
-        headers = {
-            'Accept-Ranges': 'bytes',
-            'Content-Type': content_type
-        }
+        range_header = request.headers.get("Range")
+
+        headers = {"Accept-Ranges": "bytes", "Content-Type": content_type}
 
         if range_header and content_length:
             # Parse the range header
-            start, end = range_header.replace('bytes=', '').split('-')
+            start, end = range_header.replace("bytes=", "").split("-")
             start = int(start)
             end = int(end) if end else int(content_length) - 1
-            
+
             # Add range headers to the request
-            headers['Range'] = f'bytes={start}-{end}'
-            headers['Content-Range'] = f'bytes {start}-{end}/{content_length}'
-            headers['Content-Length'] = str(end - start + 1)
+            headers["Range"] = f"bytes={start}-{end}"
+            headers["Content-Range"] = f"bytes {start}-{end}/{content_length}"
+            headers["Content-Length"] = str(end - start + 1)
             status_code = 206
         else:
             status_code = 200
             if content_length:
-                headers['Content-Length'] = content_length
+                headers["Content-Length"] = content_length
 
         # Make the request with the appropriate headers
         response = requests.get(
-            stream_url, 
+            stream_url,
             headers=headers if range_header else None,
-            proxies=proxy, 
-            stream=True
+            proxies=proxy,
+            stream=True,
         )
 
+        def generate():
+            for chunk in response.iter_content(chunk_size=8192):
+                yield chunk
+
         return Response(
-            response.iter_content(chunk_size=8192),
-            status=status_code,
-            headers=headers,
-            direct_passthrough=True
+            generate(), status=status_code, headers=headers, mimetype=content_type
         )
 
     except Exception as e:
