@@ -238,5 +238,5 @@ def serve_subtitle(filename):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
     return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+# if __name__ == "__main__":
+#     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
