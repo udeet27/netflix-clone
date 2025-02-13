@@ -4,14 +4,14 @@ import os
 import requests
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+# app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Update CORS to allow your Vercel domain
-CORS(app, resources={r"/*": {"origins": "*"}})  # For testing, we'll allow all origins temporarily
+CORS(
+    app, resources={r"/*": {"origins": "*"}}
+)  # For testing, we'll allow all origins temporarily
 
 # For Vercel, we need to handle the root path differently
 if os.environ.get("VERCEL_ENV") == "production":
@@ -19,11 +19,12 @@ if os.environ.get("VERCEL_ENV") == "production":
     SUBTITLE_DIR = "/tmp/subtitles"
 else:
     SUBTITLE_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "static/subtitles"
+        os.path.dirname(os.path.abspath(__file__)), "../static/subtitles"
     )
 
 if not os.path.exists(SUBTITLE_DIR):
     os.makedirs(SUBTITLE_DIR, mode=0o755)
+
 
 # Add logging
 @app.after_request
@@ -34,29 +35,28 @@ def after_request(response):
         print(f"Response Data: {response.get_data(as_text=True)}")
     return response
 
+
 @app.errorhandler(404)
 def not_found_error(error):
     return jsonify({"success": False, "error": "Resource not found"}), 404
+
 
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({"success": False, "error": "Internal server error"}), 500
 
-limiter = Limiter(
-    app=app, key_func=get_remote_address, default_limits=["200 per day", "50 per hour"]
-)
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/search", methods=["POST"])
-@limiter.limit("30 per minute")
 def search():
     try:
         query = request.form.get("query")
         content_type = request.form.get("content_type", "all")
-        
+
         print(f"Search Query: {query}")
         print(f"Content Type: {content_type}")
 
@@ -137,6 +137,7 @@ def search():
         print(f"Search Error: {str(e)}")  # Add error logging
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @app.route("/episodes", methods=["GET"])
 def get_episodes():
     season = request.args.get("season")
@@ -164,8 +165,8 @@ def get_episodes():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+
 @app.route("/stream", methods=["GET"])
-@limiter.limit("60 per minute")
 def get_stream():
     season = request.args.get("season")
     episode = request.args.get("episode")
@@ -232,11 +233,13 @@ def get_stream():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+
 @app.route("/static/subtitles/<path:filename>")
 def serve_subtitle(filename):
     if ".." in filename or filename.startswith("/"):
         return jsonify({"success": False, "error": "Invalid filename"}), 400
     return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
+
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
