@@ -54,20 +54,6 @@ def index():
     return render_template("index.html")
 
 
-# Create a session with retry strategy
-def create_session_with_retry():
-    session = requests.Session()
-    retry_strategy = Retry(
-        total=3,
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504],
-    )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    return session
-
-
 # List of fallback domains
 HDREZKA_DOMAINS = [
     "https://hdrezka.ag",
@@ -78,12 +64,17 @@ HDREZKA_DOMAINS = [
 
 
 def try_search_with_fallback(query, find_all=True):
-    session = create_session_with_retry()
 
     for domain in HDREZKA_DOMAINS:
         try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Connection": "keep-alive",
+            }
             print(f"Trying domain: {domain}")
-            rezka = HdRezkaSearch(domain)
+            rezka = HdRezkaSearch(domain, {}, headers)
             results = rezka(query, find_all=find_all)
             if results:
                 return results
