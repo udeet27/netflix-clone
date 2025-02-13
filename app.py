@@ -19,7 +19,7 @@ if os.environ.get("VERCEL_ENV") == "production":
     SUBTITLE_DIR = "/tmp/subtitles"
 else:
     SUBTITLE_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../static/subtitles"
+        os.path.dirname(os.path.abspath(__file__)), "/static/subtitles"
     )
 
 if not os.path.exists(SUBTITLE_DIR):
@@ -241,5 +241,5 @@ def serve_subtitle(filename):
     return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
 
 
-# if __name__ == "__main__":
-#     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
