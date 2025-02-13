@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, Response
 from HdRezkaApi import *
 import os
 import requests
@@ -76,11 +76,11 @@ def try_search_with_fallback(query, find_all=True):
             print(f"Trying domain: {domain}")
             rezka = HdRezkaSearch(
                 domain,
-                {
+                proxy={
                     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 },
-                headers,
+                headers=headers,
             )
             results = rezka(query, find_all=find_all)
             if results:
@@ -95,12 +95,7 @@ def try_search_with_fallback(query, find_all=True):
 @app.route("/search", methods=["POST"])
 def search():
     try:
-        headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-                "Connection": "keep-alive",
-            }
+        
         query = request.form.get("query")
         content_type = request.form.get("content_type", "all")
 
@@ -127,11 +122,16 @@ def search():
         url = matching_result["url"]
         rezka = HdRezkaApi(
             url,
-            {
+            proxy={
                 "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             },
-            headers,
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Connection": "keep-alive",
+            },
         )
 
         if rezka.type == "tv_series":
@@ -309,6 +309,28 @@ def serve_subtitle(filename):
         return send_from_directory(tempfile.gettempdir(), filename, mimetype="text/vtt")
     else:
         return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
+
+
+@app.route("/proxy-stream")
+def proxy_stream():
+    stream_url = request.args.get("url")
+    if not stream_url:
+        return jsonify({"error": "No URL provided"}), 400
+
+    proxy = {
+        "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+        "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+    }
+    
+    try:
+        response = requests.get(stream_url, proxies=proxy, stream=True)
+        return Response(
+            response.iter_content(chunk_size=1024),
+            content_type=response.headers.get("content-type", "video/mp4"),
+            headers=dict(response.headers)
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
