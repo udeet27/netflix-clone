@@ -95,6 +95,12 @@ def try_search_with_fallback(query, find_all=True):
 @app.route("/search", methods=["POST"])
 def search():
     try:
+        headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Connection": "keep-alive",
+            }
         query = request.form.get("query")
         content_type = request.form.get("content_type", "all")
 
@@ -120,11 +126,12 @@ def search():
 
         url = matching_result["url"]
         rezka = HdRezkaApi(
-            url
-            # proxy={
-            #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-            #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-            # }
+            url,
+            {
+                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            },
+            headers,
         )
 
         if rezka.type == "tv_series":
