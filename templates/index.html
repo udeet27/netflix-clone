@@ -489,6 +489,11 @@
                     </div>
                     <video controls crossorigin="anonymous">
                         <source src="${data.stream_url}" type="video/mp4">
+                        ${
+                          data.subtitle_filename
+                            ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
+                            : ""
+                        }
                     </video>
                 </div>
               `;
@@ -560,6 +565,11 @@
                 <div class="video-container">
                     <video controls crossorigin="anonymous">
                         <source src="${data.stream_url}" type="video/mp4">
+                        ${
+                          data.subtitle_filename
+                            ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
+                            : ""
+                        }
                     </video>
                 </div>
               `;
@@ -641,6 +651,11 @@
           if (data.success) {
             video.innerHTML = `
               <source src="${data.stream_url}" type="video/mp4">
+              ${
+                data.subtitle_filename
+                  ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
+                  : ""
+              }
             `;
             video.load();
 
