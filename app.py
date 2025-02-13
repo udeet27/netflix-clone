@@ -323,13 +323,52 @@ def proxy_stream():
     }
     
     try:
-        response = requests.get(stream_url, proxies=proxy, stream=True)
-        return Response(
-            response.iter_content(chunk_size=1024),
-            content_type=response.headers.get("content-type", "video/mp4"),
-            headers=dict(response.headers)
+        # Get the video headers first
+        head_response = requests.head(stream_url, proxies=proxy)
+        content_length = head_response.headers.get('content-length')
+        content_type = head_response.headers.get('content-type', 'video/mp4')
+
+        # Get the requested range from the client
+        range_header = request.headers.get('Range')
+        
+        headers = {
+            'Accept-Ranges': 'bytes',
+            'Content-Type': content_type
+        }
+
+        if range_header and content_length:
+            # Parse the range header
+            start, end = range_header.replace('bytes=', '').split('-')
+            start = int(start)
+            end = int(end) if end else int(content_length) - 1
+            
+            # Add range headers to the request
+            headers['Range'] = f'bytes={start}-{end}'
+            headers['Content-Range'] = f'bytes {start}-{end}/{content_length}'
+            headers['Content-Length'] = str(end - start + 1)
+            status_code = 206
+        else:
+            status_code = 200
+            if content_length:
+                headers['Content-Length'] = content_length
+
+        # Make the request with the appropriate headers
+        response = requests.get(
+            stream_url, 
+            headers=headers if range_header else None,
+            proxies=proxy, 
+            stream=True
         )
+
+        return Response(
+            response.iter_content(chunk_size=8192),
+            status=status_code,
+            headers=headers,
+            direct_passthrough=True
+        )
+
     except Exception as e:
+        print(f"Proxy Stream Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
