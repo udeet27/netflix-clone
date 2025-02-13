@@ -9,6 +9,7 @@ from flask import (
 from HdRezkaApi import *
 import os
 import requests
+import random
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from requests.adapters import HTTPAdapter
@@ -69,6 +70,28 @@ HDREZKA_DOMAINS = [
     "https://kinopub.me",
 ]
 
+def get_free_proxy():
+    """Fetch a list of free proxies and select a random one."""
+    try:
+        response = requests.get(
+            "https://proxylist.geonode.com/api/proxy-list?limit=50&page=1&sort_by=lastChecked&sort_type=desc"
+        )
+        proxies = response.json().get("data", [])
+        proto = ['socks4']
+        chosen_proxies = [p for p in proxies if p['protocols'] == proto]
+        print('chosen_proxies',chosen_proxies)
+            
+        # Select a random proxy from filtered list
+        proxy = random.choice(chosen_proxies)
+        print('proxy',proxy)
+        proxy_url = f"socks4://{proxy['ip']}:{proxy['port']}"
+        print('proxy_url',proxy_url)
+        return {
+            "socks4": proxy_url,
+        }
+    except Exception as e:
+        print("Error fetching proxies:", e)
+        return None
 
 def try_search_with_fallback(query, find_all=True):
 
@@ -83,10 +106,9 @@ def try_search_with_fallback(query, find_all=True):
             print(f"Trying domain: {domain}")
             rezka = HdRezkaSearch(
                 domain,
-                proxy={
-                    "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                    "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                },
+                proxy=get_free_proxy(),
+                    # "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                    # "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 headers=headers,
             )
             results = rezka(query, find_all=find_all)
@@ -129,10 +151,9 @@ def search():
         url = matching_result["url"]
         rezka = HdRezkaApi(
             url,
-            proxy={
-                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-            },
+            proxy=get_free_proxy(),
+            # "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                # "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
