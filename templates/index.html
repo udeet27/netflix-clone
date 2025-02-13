@@ -488,7 +488,7 @@
                         <div style="margin-top: 10px; color: #e50914;">Loading episode...</div>
                     </div>
                     <video controls crossorigin="anonymous">
-                        <source src="/proxy-stream?url=${encodeURIComponent(data.stream_url)}" type="video/mp4">
+                        <source src="${data.stream_url}" type="video/mp4">
                     </video>
                 </div>
               `;
@@ -559,12 +559,7 @@
                 </div>
                 <div class="video-container">
                     <video controls crossorigin="anonymous">
-                        <source src="/proxy-stream?url=${encodeURIComponent(data.stream_url)}" type="video/mp4">
-                        ${
-                          data.subtitle_filename
-                            ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
-                            : ""
-                        }
+                        <source src="${data.stream_url}" type="video/mp4">
                     </video>
                 </div>
               `;
@@ -645,12 +640,7 @@
 
           if (data.success) {
             video.innerHTML = `
-              <source src="/proxy-stream?url=${encodeURIComponent(data.stream_url)}" type="video/mp4">
-              ${
-                data.subtitle_filename
-                  ? `<track label="English" kind="subtitles" srclang="en" src="/static/subtitles/${data.subtitle_filename}" default>`
-                  : ""
-              }
+              <source src="${data.stream_url}" type="video/mp4">
             `;
             video.load();
 
