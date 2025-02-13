@@ -196,7 +196,9 @@ def get_episodes():
             return jsonify({"success": False, "error": "Content not found"})
 
         url = results[0]["url"]
-        rezka = HdRezkaApi(url, proxy={
+        rezka = HdRezkaApi(
+            url,
+            proxy={
                 "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             },
@@ -239,7 +241,9 @@ def get_stream():
             return jsonify({"success": False, "error": f"No {content_type} found"})
 
         url = matching_result["url"]
-        rezka = HdRezkaApi(url, proxy={
+        rezka = HdRezkaApi(
+            url,
+            proxy={
                 "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             },
@@ -268,7 +272,7 @@ def get_stream():
             and "en" in stream_2.subtitles.subtitles
         ):
             subtitles_url = stream_2.subtitles.subtitles["en"]["link"]
-            os.makedirs("static/subtitles", exist_ok=True)
+            # os.makedirs("static/subtitles", exist_ok=True)
             response = requests.get(subtitles_url)
             if response.status_code == 200:
                 subtitle_filename = f"{query}_{'s' + season + 'e' + episode if content_type == 'tv_series' else ''}_subtitles.vtt"
