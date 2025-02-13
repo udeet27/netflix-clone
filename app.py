@@ -4,6 +4,9 @@ import os
 import requests
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+import time
 
 app = Flask(__name__)
 # app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -51,6 +54,46 @@ def index():
     return render_template("index.html")
 
 
+# Create a session with retry strategy
+def create_session_with_retry():
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
+# List of fallback domains
+HDREZKA_DOMAINS = [
+    "https://hdrezka.ag",
+    "https://hdrezka.me",
+    "https://rezka.ag",
+    "https://kinopub.me",
+]
+
+
+def try_search_with_fallback(query, find_all=True):
+    session = create_session_with_retry()
+
+    for domain in HDREZKA_DOMAINS:
+        try:
+            print(f"Trying domain: {domain}")
+            rezka = HdRezkaSearch(domain, session=session)
+            results = rezka(query, find_all=find_all)
+            if results:
+                return results
+        except Exception as e:
+            print(f"Error with domain {domain}: {str(e)}")
+            continue
+
+    raise Exception("Unable to access HdRezka through any available domains")
+
+
 @app.route("/search", methods=["POST"])
 def search():
     try:
@@ -63,7 +106,8 @@ def search():
         if not query:
             return jsonify({"success": False, "error": "No query provided"}), 400
 
-        results = HdRezkaSearch("https://hdrezka.ag/")(query, find_all=True)
+        # Use the new search function with fallback domains
+        results = try_search_with_fallback(query, find_all=True)
         print("API response: ", results)
         matching_result = None
 
@@ -146,8 +190,7 @@ def get_episodes():
     query = request.args.get("query")
 
     try:
-        # Get the content URL from the search results
-        results = HdRezkaSearch("https://hdrezka.ag/")(query)
+        results = try_search_with_fallback(query)
         if not results:
             return jsonify({"success": False, "error": "Content not found"})
 
@@ -175,7 +218,7 @@ def get_stream():
     content_type = request.args.get("content_type")
 
     try:
-        results = HdRezkaSearch("https://hdrezka.ag/")(query, find_all=True)
+        results = try_search_with_fallback(query, find_all=True)
         matching_result = None
 
         # Search through pages to find first matching result
