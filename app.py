@@ -196,7 +196,11 @@ def get_episodes():
             return jsonify({"success": False, "error": "Content not found"})
 
         url = results[0]["url"]
-        rezka = HdRezkaApi(url)
+        rezka = HdRezkaApi(url, proxy={
+                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            },
+        )
 
         # Get episodes for the specified season
         series_info = rezka.seriesInfo["Оригинал (+субтитры)"]
@@ -235,7 +239,11 @@ def get_stream():
             return jsonify({"success": False, "error": f"No {content_type} found"})
 
         url = matching_result["url"]
-        rezka = HdRezkaApi(url)
+        rezka = HdRezkaApi(url, proxy={
+                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            },
+        )
 
         # Handle TV series
         if content_type == "tv_series":
