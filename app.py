@@ -107,9 +107,11 @@ def try_search_with_fallback(query, find_all=True):
             print(f"Trying domain: {domain}")
             rezka = HdRezkaSearch(
                 domain,
-                proxy=get_free_proxy(),
+                proxy=
+                # get_free_proxy(),
                     # "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                     # "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                    {'http': 'http://0.0.0.0:5000'},
                 headers=headers,
             )
             results = rezka(query, find_all=find_all)
