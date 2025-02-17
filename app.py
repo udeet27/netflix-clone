@@ -109,6 +109,7 @@ def try_search_with_fallback(query, find_all=True):
                 "Connection": "keep-alive",
             }
             print(f"Trying domain: {domain}")
+            print('proxy being used:',proxy)
             rezka = HdRezkaSearch(
                 domain,
                 proxy={
