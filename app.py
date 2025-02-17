@@ -71,7 +71,6 @@ HDREZKA_DOMAINS = [
     "https://kinopub.me",
 ]
 
-proxy = FreeProxy().get()
 
 def get_free_proxy():
     """Fetch a list of free proxies and select a random one."""
@@ -99,6 +98,7 @@ def get_free_proxy():
 
 
 def try_search_with_fallback(query, find_all=True):
+    proxy = FreeProxy().get()
 
     for domain in HDREZKA_DOMAINS:
         try:
