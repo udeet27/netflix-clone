@@ -70,6 +70,7 @@ HDREZKA_DOMAINS = [
     "https://kinopub.me",
 ]
 
+
 def get_free_proxy():
     """Fetch a list of free proxies and select a random one."""
     try:
@@ -77,15 +78,15 @@ def get_free_proxy():
             "https://proxylist.geonode.com/api/proxy-list?protocols=http&limit=500&page=1&sort_by=speed&sort_type=desc"
         )
         proxies = response.json().get("data", [])
-        proto = ['http']
-        chosen_proxies = [p for p in proxies if p['protocols'] == proto]
-        print('chosen_proxies',chosen_proxies)
-            
+        proto = ["http"]
+        chosen_proxies = [p for p in proxies if p["protocols"] == proto]
+        print("chosen_proxies", chosen_proxies)
+
         # Select a random proxy from filtered list
         proxy = random.choice(chosen_proxies)
-        print('proxy',proxy)
+        print("proxy", proxy)
         proxy_url = f"http://{proxy['ip']}:{proxy['port']}"
-        print('proxy_url',proxy_url)
+        print("proxy_url", proxy_url)
         return {
             "http": proxy_url,
             # "https": proxy_url
@@ -93,6 +94,7 @@ def get_free_proxy():
     except Exception as e:
         print("Error fetching proxies:", e)
         return None
+
 
 def try_search_with_fallback(query, find_all=True):
 
@@ -107,12 +109,12 @@ def try_search_with_fallback(query, find_all=True):
             print(f"Trying domain: {domain}")
             rezka = HdRezkaSearch(
                 domain,
-                proxy={
-                # get_free_proxy(),
-                    "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                    "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                    # 'http': 'http://0.0.0.0:5000'
-                    },
+                # proxy={
+                # # get_free_proxy(),
+                #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+                #     # 'http': 'http://0.0.0.0:5000'
+                #     },
                 headers=headers,
             )
             results = rezka(query, find_all=find_all)
@@ -155,9 +157,9 @@ def search():
         url = matching_result["url"]
         rezka = HdRezkaApi(
             url,
-            proxy=get_free_proxy(),
+            # proxy=get_free_proxy(),
             # "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                # "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            # "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -237,10 +239,10 @@ def get_episodes():
         url = results[0]["url"]
         rezka = HdRezkaApi(
             url,
-            proxy={
-                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-            },
+            # proxy={
+            #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            # },
         )
 
         # Get episodes for the specified season
@@ -282,10 +284,10 @@ def get_stream():
         url = matching_result["url"]
         rezka = HdRezkaApi(
             url,
-            proxy={
-                "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-                "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
-            },
+            # proxy={
+            #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
+            # },
         )
 
         # Handle TV series
@@ -341,6 +343,7 @@ def serve_subtitle(filename):
         return send_from_directory(tempfile.gettempdir(), filename, mimetype="text/vtt")
     else:
         return send_from_directory("static/subtitles", filename, mimetype="text/vtt")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
