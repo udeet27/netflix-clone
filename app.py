@@ -15,6 +15,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from requests.adapters import HTTPAdapter
 import time
 import tempfile
+from fp.fp import FreeProxy
 
 app = Flask(__name__)
 # app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -70,6 +71,7 @@ HDREZKA_DOMAINS = [
     "https://kinopub.me",
 ]
 
+proxy = FreeProxy().get()
 
 def get_free_proxy():
     """Fetch a list of free proxies and select a random one."""
@@ -109,12 +111,13 @@ def try_search_with_fallback(query, find_all=True):
             print(f"Trying domain: {domain}")
             rezka = HdRezkaSearch(
                 domain,
-                # proxy={
-                # # get_free_proxy(),
+                proxy={
+                    "http": proxy
+                # get_free_proxy(),
                 #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
                 #     # 'http': 'http://0.0.0.0:5000'
-                #     },
+                    },
                 headers=headers,
             )
             results = rezka(query, find_all=find_all)
@@ -157,6 +160,8 @@ def search():
         url = matching_result["url"]
         rezka = HdRezkaApi(
             url,
+            proxy={
+                "http": proxy},
             # proxy=get_free_proxy(),
             # "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             # "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
@@ -239,6 +244,8 @@ def get_episodes():
         url = results[0]["url"]
         rezka = HdRezkaApi(
             url,
+            proxy={
+                "http": proxy}
             # proxy={
             #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
@@ -284,6 +291,8 @@ def get_stream():
         url = matching_result["url"]
         rezka = HdRezkaApi(
             url,
+            proxy={
+                "http": proxy},
             # proxy={
             #     "http": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
             #     "https": "http://brd-customer-hl_17133699-zone-datacenter_proxy1:zmswb3g2byzf@brd.superproxy.io:33335",
